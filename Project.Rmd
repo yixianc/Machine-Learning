@@ -1,0 +1,58 @@
+---
+title: "Practical Machine Learning Project"
+output:
+  html_document:
+    fig_height: 7
+    fig_width: 10
+---
+
+#Introduction
+In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. The goal of the project is to predict the manner in which they did the exercise. The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. 
+
+#Reading of Data
+```{r,message=FALSE,cache=TRUE}
+traindata = read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+testdata=read.csv("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+```
+
+#Manipulation of Data
+Remove index column and columns with NA.
+```{r}
+traindata=traindata[,c(2:11,37:49,60:68,84:86,160)]
+testdata=testdata[,c(2:11,37:49,60:68,84:86)]
+```
+
+#Cross Validation
+Partition the training data into 60% training and 40% testing for cross validation.
+```{r,message=FALSE,warning=FALSE}
+set.seed(1753)
+library(caret)
+in.train <- createDataPartition(traindata$classe, p=0.60, list=FALSE)
+train <- traindata[in.train,]
+test <- traindata[-in.train,]
+```
+
+#Predicting with Tree
+```{r,message=FALSE,warning=FALSE}
+modFitTree=train(classe~., method="rpart",data=train)
+print(modFitTree)
+plot(modFitTree$finalModel,main="Classification Tree")
+text(modFitTree$finalModel,use.n = T,all=T,cex=0.6)
+
+predictTree <- predict(modFitTree, newdata=test)
+confusionMatrix(test$classe,predictTree)
+```
+
+#Predicting with Random Forest
+```{r,message=FALSE,warning=FALSE}
+library(randomForest)
+modFitRF=randomForest(classe~.,data=train)
+predictRF=predict(modFitRF,newdata=test)
+confusionMatrix(test$classe,predictRF)
+```
+
+#Conclusion
+Looking at the confusion matrix and statistics, it is obvious that the random forest model is a much better prediction model with accuracy of 0.9987
+
+
+
